@@ -67,7 +67,7 @@ That means you can use the proposed command `flyctl launch --image flyio/hellofl
 
 But as we want to use our own Spring Boot project at https://github.com/jonashackt/spring-boot-flyio we need to create a Docker image first. 
 
-That's easy using Cloud Native Buildpack support in Spring Boot https://blog.codecentric.de/en/2020/11/buildpacks-spring-boot/. Via Maven there's the `spring-boot:build-image` goal. Since fly CLI `launch --image` command cannont deploy a Docker image that wasn't published to a dedicated registry before, we also need to publish our image. With Maven there would be the `-Dspring-boot.build-image.publish` parameter as stated in the docs https://docs.spring.io/spring-boot/docs/current/maven-plugin/reference/htmlsingle/#build-image.examples.publish - but we also would have to configure a `<publishRegistry>` tag inside our `pom.xml`.
+That's easy using Cloud Native Buildpack support in Spring Boot https://blog.codecentric.de/en/2020/11/buildpacks-spring-boot/. 
 
 But using pack CLI https://buildpacks.io/docs/tools/pack/ directly makes that a lot easier. With pack we can re-use our login to the Docker registry we want to publish to on the command line. And as the Docker Hub introduced a rate limiting I always love to use the GitHub Container Registry in my projects https://blog.codecentric.de/en/2021/03/github-container-registry/. Be sure to have done a login to GitHub Container Registry https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-container-registry#authenticating-to-the-container-registry before running the following pack CLI command to build our Spring Boot app into a Docker image: 
 
@@ -115,14 +115,21 @@ Now we should finally have our image publicly available and should be able to de
 fly launch --image ghcr.io/jonashackt/spring-boot-flyio:latest
 ```
 
-
-But looking into our fly.io dashboard we may see an error...
-
+This command will ask a few questions at first (region, app name, etc) and then deploy our Spring Boot app.
 
 
-### Alternative image building: Configure Buildpacks support for Spring Boot in fly.io
+### Alternative image building: Via Maven or Buildpacks support in flyctl
 
-As an alternative to using Paketo and pack CLI yourself you can even hand that one over to fly CLI. But as opposed to what's stated in the docs https://fly.io/docs/reference/configuration/#the-build-section we do not need to add a `buildpacks` configuration to our `fly.toml`.
+There are a few alternatives to using Paketo and the pack CLI. For example we can use Maven and it's `mvn spring-boot:build-image` command. Since fly CLI `launch --image` command per default wants to deploy a Docker image that was pushed to a dedicated registry before, we also need to publish our image. Therefore we can add the `-Dspring-boot.build-image.publish` parameter as stated in the docs https://docs.spring.io/spring-boot/docs/current/maven-plugin/reference/htmlsingle/#build-image.examples.publish . But using this parameter we also would have to configure a `<publishRegistry>` tag inside our `pom.xml`. If that's to much of configuration, we could also use the Fly.io registry instead of the GitHub Container registry and simply publish the locally build image there. This can be accomplished leveraging the `--local-only` fly CLI paramter like this:
+
+```shell
+fly deploy --local-only --image jonashackt/spring-boot-flyio
+```
+
+This will upload the image tagged `jonashackt/spring-boot-flyio` to the fly.io registry.
+
+
+Another way of building the image yourself would be to hand it over to fly CLI. But as opposed to what's stated in the docs https://fly.io/docs/reference/configuration/#the-build-section we do not need to add a `buildpacks` configuration to our `fly.toml`.
 
 Instead we simply override the generated `image` configuration inside the `fly.toml`:
 
@@ -228,7 +235,7 @@ Just access it at https://spring-boot-flyio.fly.dev/hello
 
 
 
-### Autodeploy to fly.io with GitHub Actions
+### Automatically publish to GitHub Container Registry with GitHub Actions
 
 In Heroku there was this really nice feature called auto deploys, which deployed a new version of the app when code on GitHub had changed. My first research in the fly.io docs didn't present any auto deploys feature right out of the box. 
 
@@ -287,7 +294,7 @@ This will give our Action `read` access on the image. Since we also want to push
 
 
 
-### Doing the autodeploy to fly.io
+### Autodeploys to fly.io with GitHub Actions
 
 In order to deploy our successfully build container image that was pushed to GitHub Container Registry we need to create an auth token we can use to deploy to fly.io. Therefor simply run:
 
@@ -311,7 +318,7 @@ jobs:
 ...
 ```
 
-Now we https://github.com/superfly/flyctl-actions 
+Now we only need to install `flyctl` in GitHub Actions. That's easily done by the official flyctl-actions https://github.com/superfly/flyctl-actions . Finally we simply deploy our application just as we did locally (but with the fully qualified `flyctl` command, since `fly` isn't available in GitHub Actions):
 
 ```yaml
       - name: Install flyctl via https://github.com/superfly/flyctl-actions
@@ -321,6 +328,12 @@ Now we https://github.com/superfly/flyctl-actions
         run: flyctl deploy --image ghcr.io/jonashackt/spring-boot-flyio:latest
 ```
 
+
+### Back to the free plan! Native image to the rescue
+
+Remember that we are producing a small bill with our Spring Boot app needing more than the 256MBs of RAM? Isn't there a way to reduce our applications memory footprint?
+
+As you may already noticed I configured the `Spring Native` dependency into our Spring Boot project. This experimental project enables our app to be build into a native image with a much smaller memory footprint based on GraalVM https://blog.codecentric.de/en/2020/05/spring-boot-graalvm/
 
 
 
