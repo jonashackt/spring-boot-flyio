@@ -318,7 +318,7 @@ Now we https://github.com/superfly/flyctl-actions
         uses: superfly/flyctl-actions/setup-flyctl@master
       
       - name: Deploy our Spring Boot app to fly.io
-        run: fly deploy --image ghcr.io/jonashackt/spring-boot-flyio:latest
+        run: flyctl deploy --image ghcr.io/jonashackt/spring-boot-flyio:latest
 ```
 
 
