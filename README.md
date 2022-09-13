@@ -315,7 +315,7 @@ Now we https://github.com/superfly/flyctl-actions
 
 ```yaml
       - name: Install flyctl via https://github.com/superfly/flyctl-actions
-        uses: superfly/flyctl-actions/setup-flyctl@1.3
+        uses: superfly/flyctl-actions/setup-flyctl@master
       
       - name: Deploy our Spring Boot app to fly.io
         run: fly deploy --image ghcr.io/jonashackt/spring-boot-flyio:latest
