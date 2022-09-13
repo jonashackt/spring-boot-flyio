@@ -240,7 +240,7 @@ name: autodeploy
 on: [push]
 
 jobs:
-  publish-to-ghcr:
+  autodeploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -287,13 +287,39 @@ This will give our Action `read` access on the image. Since we also want to push
 
 
 
+### Doing the autodeploy to fly.io
+
+In order to deploy our successfully build container image that was pushed to GitHub Container Registry we need to create an auth token we can use to deploy to fly.io. Therefor simply run:
+
 ```shell
 fly auth token
 ```
 
+Now head over to your GitHub Repository's `Settings` and click on `Secrets/Actions`. Now create a new secret by clicking on `New repository secret`, give it a name like `FLY_API_TOKEN` and insert the token from the command line:
 
+![github-repository-secret-fly-auth](screenshots/github-repository-secret-fly-auth.png)
 
+With that token in place we can add some new lines to our GitHub Actions workflow in [autodeploy.yml](.github/workflows/autodeploy.yml). First we add the `FLY_API_TOKEN` as an environment variable so that flyctl can use it for the deployment:
 
+```yaml
+...
+jobs:
+  autodeploy:
+    runs-on: ubuntu-latest
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+...
+```
+
+Now we https://github.com/superfly/flyctl-actions 
+
+```yaml
+      - name: Install flyctl via https://github.com/superfly/flyctl-actions
+        uses: superfly/flyctl-actions/setup-flyctl@1.3
+      
+      - name: Deploy our Spring Boot app to fly.io
+        run: fly deploy --image ghcr.io/jonashackt/spring-boot-flyio:latest
+```
 
 
 
@@ -304,3 +330,6 @@ fly auth token
 > The fly launch command detects your Dockerfile and builds it. If you have Docker running locally, it builds it on your machine. If not, it builds it on a Fly build machine. Once your container is built, it's deployed!
 
 https://fly.io/docs/languages-and-frameworks/dockerfile/
+
+
+https://blog.hartleybrody.com/thoughts-on-flyio/
