@@ -1,5 +1,9 @@
 # spring-boot-flyio
-Having a look at https://fly.io/
+[![Build Status](https://github.com/jonashackt/spring-boot-flyio/workflows/autodeploy/badge.svg)](https://github.com/jonashackt/spring-boot-flyio/actions)
+[![renovateenabled](https://img.shields.io/badge/renovate-enabled-yellow)](https://renovatebot.com)
+[![versionspringboot](https://img.shields.io/badge/dynamic/xml?color=brightgreen&url=https://raw.githubusercontent.com/jonashackt/spring-boot-flyio/master/pom.xml&query=%2F%2A%5Blocal-name%28%29%3D%27project%27%5D%2F%2A%5Blocal-name%28%29%3D%27parent%27%5D%2F%2A%5Blocal-name%28%29%3D%27version%27%5D&label=springboot)](https://github.com/spring-projects/spring-boot)
+
+Example project showing how to run Spring Boot apps on https://fly.io/
 
 ## Why?
 
@@ -101,7 +105,7 @@ Having a look into the package view of our repository we should be able to see t
 
 Before we can actually use this image with fly.io, we have to make it publicly accessible. This is just needed once - and its only because the default visibility for container images on the GitHub Container Registry is private.
 
-So head over to the package settings of your GitHub Container Registry image and scroll down to the `Danger Zone` and click on `change visibility`:
+So head over to the package settings of your GitHub Container Registry image (the package settings live in https://github.com/users/yourOrgaName/packages/container/yourRepositoryName/settings) and scroll down to the `Danger Zone` and click on `change visibility`:
 
 ![container-image-visibility](screenshots/container-image-visibility.png)
 
@@ -124,7 +128,7 @@ Instead we simply override the generated `image` configuration inside the `fly.t
 
 ```toml
 [build]
-  image = "ghcr.io/jonashackt/microservice-api-spring-boot:latest"
+  image = "ghcr.io/jonashackt/spring-boot-flyio:latest"
 ```
 
 and simply use the `builder` tag only like this (as stated in this so answer https://stackoverflow.com/a/73688179/4964553):
@@ -134,7 +138,7 @@ and simply use the `builder` tag only like this (as stated in this so answer htt
   builder = "paketobuildpacks/builder:base"
 ```
 
-Now fly CLI will build your app using Cloud Native Buildpacks without you requiring to issue pack CLI commands. And it even publishes the image to the fly.io Docker registry at registry.fly.io/microservice-api-spring-boot and deploy your app correctly.
+Now fly CLI will build your app using Cloud Native Buildpacks without you requiring to issue pack CLI commands. And it even publishes the image to the fly.io Docker registry at registry.fly.io/spring-boot-flyio and deploy your app correctly.
 
 
 
@@ -145,17 +149,17 @@ Our Spring Boot app wasn't deployed successfully sadly. Having a look into the `
 
 ```shell
 ...
- 2022-09-12T09:55:32.686 runner[effc34fc] fra [info] Starting virtual machine
-2022-09-12T09:55:32.854 app[effc34fc] fra [info] Starting init (commit: 249766e)...
-2022-09-12T09:55:32.870 app[effc34fc] fra [info] Preparing to run: `/cnb/process/web` as 1000
-2022-09-12T09:55:32.881 app[effc34fc] fra [info] 2022/09/12 09:55:32 listening on [fdaa:0:938e:a7b:a992:effc:34fc:2]:22 (DNS: [fdaa::3]:53)
-2022-09-12T09:55:32.921 app[effc34fc] fra [info] Setting Active Processor Count to 1
-2022-09-12T09:55:33.006 app[effc34fc] fra [info] Calculating JVM memory based on 194456K available memory
-2022-09-12T09:55:33.006 app[effc34fc] fra [info] For more information on this calculation, see https://paketo.io/docs/reference/java-reference/#memory-calculator
-2022-09-12T09:55:33.006 app[effc34fc] fra [info] unable to calculate memory configuration
-2022-09-12T09:55:33.006 app[effc34fc] fra [info] fixed memory regions require 637219K which is greater than 194456K available for allocation: -XX:MaxDirectMemorySize=10M, -XX:MaxMetaspaceSize=125219K, -XX:ReservedCodeCacheSize=240M, -Xss1M * 250 threads
-2022-09-12T09:55:33.006 app[effc34fc] fra [info] ERROR: failed to launch: exec.d: failed to execute exec.d file at path '/layers/paketo-buildpacks_bellsoft-liberica/helper/exec.d/memory-calculator': exit status 1
-2022-09-12T09:55:33.875 app[effc34fc] fra [info] Starting clean up. 
+ 2022-09-12T14:26:28.806 runner[dc01b687] fra [info] Starting virtual machine
+2022-09-12T14:26:29.049 app[dc01b687] fra [info] Starting init (commit: 249766e)...
+2022-09-12T14:26:29.069 app[dc01b687] fra [info] Preparing to run: `/cnb/process/web` as 1000
+2022-09-12T14:26:29.083 app[dc01b687] fra [info] 2022/09/12 14:26:29 listening on [fdaa:0:938e:a7b:66:dc01:b687:2]:22 (DNS: [fdaa::3]:53)
+2022-09-12T14:26:29.137 app[dc01b687] fra [info] Setting Active Processor Count to 1
+2022-09-12T14:26:29.215 app[dc01b687] fra [info] Calculating JVM memory based on 195468K available memory
+2022-09-12T14:26:29.215 app[dc01b687] fra [info] For more information on this calculation, see https://paketo.io/docs/reference/java-reference/#memory-calculator
+2022-09-12T14:26:29.215 app[dc01b687] fra [info] unable to calculate memory configuration
+2022-09-12T14:26:29.215 app[dc01b687] fra [info] fixed memory regions require 386229K which is greater than 195468K available for allocation: -XX:MaxDirectMemorySize=10M, -XX:MaxMetaspaceSize=79029K, -XX:ReservedCodeCacheSize=240M, -Xss1M * 50 threads
+2022-09-12T14:26:29.216 app[dc01b687] fra [info] ERROR: failed to launch: exec.d: failed to execute exec.d file at path '/layers/paketo-buildpacks_bellsoft-liberica/helper/exec.d/memory-calculator': exit status 1
+2022-09-12T14:26:30.073 app[dc01b687] fra [info] Starting clean up. 
 ```
 
 Our JVM-based app doesn't seem to have enough memory.
@@ -163,8 +167,10 @@ Our JVM-based app doesn't seem to have enough memory.
 But we can fix that and give our app more memory [as stated here](https://community.fly.io/t/out-of-memory-restarts/1629/3): 
 
 ```shell
-fly scale memory 1024
+fly scale memory 512
 ```
+
+Playing around with different (older) Spring Boot apps I also discovered that sometimes you need even more memory. Using 1GB of RAM is mostly enough then by running `fly scale memory 1024`.
 
 This should get us a green running Spring Boot app in the fly.io dashboard:
 
@@ -179,15 +185,15 @@ __WARNING:__ This will get our Spring Boot app running on fly.io - but will also
     3GB persistent volume storage (total)
     160GB outbound data transfer 
 
-That means upgrading the memory to `1024` will cost us $0.0000022/s or $5.70 a month. But maybe we can reduce that memory consumption back to less than 256mbs later again?
+That means upgrading the memory to `512` will cost us $0.0000012/s or $3.19 a month. But maybe we can reduce that memory consumption back to less than 256mbs later again?
 
 
 
 ### Access our Spring Boot app on fly.io
 
-Our Spring Boot app is now running on fly.io without errors. We can also click on the generated hostname microservice-api-spring-boot.fly.dev - but that won't open up our app.
+Our Spring Boot app is now running on fly.io without errors. We can also click on the generated hostname spring-boot-flyio.fly.dev - but that won't open up our app.
 
-There are two reasons for that. First we need to tell fly.io on which port our Spring Boot app want's to be accessed. The port is defined inside the [application.properties](https://github.com/jonashackt/microservice-api-spring-boot/blob/main/src/main/resources/application.properties) via `server.port=8098`.
+There are two reasons for that. First we need to tell fly.io on which port our Spring Boot app want's to be accessed. The port is defined inside the [application.properties](https://github.com/jonashackt/spring-boot-flyio/blob/main/src/main/resources/application.properties) via `server.port=8098`.
 
 Now we need to head over to the generated `fly.toml` in the root directory of our project and change the app's port as stated in the docs https://fly.io/docs/reference/configuration/#the-services-sections
 
@@ -216,11 +222,74 @@ Finally our app should now be accessible to the public:
 
 ![fly-io-accessible-spring-boot-app](screenshots/fly-io-accessible-spring-boot-app.png)
 
-Just access it at https://microservice-api-spring-boot.fly.dev/api/hello
+Just access it at https://spring-boot-flyio.fly.dev/hello
 
 ![browser-app-access](screenshots/browser-app-access.png)
 
 
+
+### Autodeploy to fly.io with GitHub Actions
+
+In Heroku there was this really nice feature called auto deploys, which deployed a new version of the app when code on GitHub had changed. My first research in the fly.io docs didn't present any auto deploys feature right out of the box. 
+
+But using GitHub we also have GitHub Actions included! So why not simply using an Actions workflow to deploy our app to fly.io on every push?! So let's enhance our example project on GitHub with an Action to build and publish an container image to the GitHub Container Registry first. Let's have a look at the workflow definition in [autodeploy.yml](.github/workflows/autodeploy.yml):
+
+```yaml
+name: autodeploy
+
+on: [push]
+
+jobs:
+  publish-to-ghcr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install pack CLI via the official buildpack Action
+        uses: buildpacks/github-actions/setup-pack@v4.8.1
+
+      - name: Build app with pack CLI & publish to bc Container Registry
+        run: |
+          pack build ghcr.io/jonashackt/spring-boot-flyio:latest \
+              --builder paketobuildpacks/builder:base \
+              --path . \
+              --env "BP_OCI_SOURCE=https://github.com/jonashackt/spring-boot-flyio" \
+              --env "BP_JVM_VERSION=17" \
+              --cache-image ghcr.io/jonashackt/spring-boot-flyio-paketo-cache-image:latest \
+              --publish
+```
+
+After the usual checkout we use the [docker/login-action](https://github.com/docker/login-action) to login to GitHub Container Registry. In order to be able to use Paketo CLI in our workflow we leverage the [buildpacks/github-actions/setup-pack](https://github.com/buildpacks/github-actions#setup-pack-cli-action) action. Now we can run our already known `pack` CLI command to build our Spring Boot app into a Docker container and push it to the GitHub Container Registry. Additionally to the command we used locally already the parameter `--cache-image` to be able to [have caching of our depenencies in place although running on an ephemeral CI environment](https://stackoverflow.com/a/66598693/4964553).
+
+And there's an additional ingredient we need to get our GitHub Actions build green: per default GitHub Container Registry images (or packages) are not accessible from within an Action. This could lead to errors like this in our Actions:
+
+```shell
+ ERROR: failed to : ensure registry read/write access to ghcr.io/jonashackt/spring-boot-flyio:latest
+ERROR: failed to build: executing lifecycle: failed with status code: 1
+Error: Process completed with exit code 1.
+```
+
+To fix that we again need to head over to the package settings of your GitHub Container Registry image (remember they live in https://github.com/users/yourOrgaName/packages/container/yourRepositoryName/settings) and scroll to `Actions repository access`. There we need to click on `Add Repository` and type in our repository name, where a drop down menu should present it like this:
+
+![ghcr-add-repository-to-image-access](screenshots/ghcr-add-repository-to-image-access.png)
+
+This will give our Action `read` access on the image. Since we also want to push our app's image to the GitHub Container Registry, we also need to explicitely configure `write` access by selecting it:
+
+![ghcr-add-repository-to-image-write-access](screenshots/ghcr-add-repository-to-image-write-access.png)
+
+
+
+```shell
+fly auth token
+```
 
 
 
