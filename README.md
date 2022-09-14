@@ -263,7 +263,7 @@ jobs:
       - name: Install pack CLI via the official buildpack Action
         uses: buildpacks/github-actions/setup-pack@v4.8.1
 
-      - name: Build app with pack CLI & publish to bc Container Registry
+      - name: Build app with pack CLI & publish to GitHub Container Registry
         run: |
           pack build ghcr.io/jonashackt/spring-boot-flyio:latest \
               --builder paketobuildpacks/builder:base \
@@ -335,13 +335,13 @@ Remember that we are producing a small bill with our Spring Boot app needing mor
 
 As you may already noticed I configured the `Spring Native` dependency into our Spring Boot project. This experimental project enables our app to be build into a native image with a much smaller memory footprint based on GraalVM https://blog.codecentric.de/en/2020/05/spring-boot-graalvm/
 
+So how can we build our Spring Boot native image with Paketo? The docs tell us how do do this. There's a parameter called `--env "BP_NATIVE_IMAGE=true"` that'll do the magic https://paketo.io/docs/howto/java/#build-an-app-as-a-graalvm-native-image-application . What's not in the docs: we also need to define the `paketobuildpacks/builder:tiny` builder to take over, since that's the Paketo builder for native images (you can run `pack builder suggest` to list all the builders incl. what they should be used for).
 
-### How to build a Spring Boot native image with Paketo?
+Also we want to use the latest GraalVM version in our build. To accomplish this we can explicitely define the Java Native Image buildpack with the parameter `--buildpack paketo-buildpacks/java-native-image@5.12.0` https://paketo.io/docs/howto/java/#configure-the-graalvm-version . This corresponds to the GraalVM version `21.3`. 
 
-https://paketo.io/docs/howto/java/#build-an-app-as-a-graalvm-native-image-application
+Now our `pack` CLI command in the GitHub Actions workflow [autodeploy.yml](.github/workflows/autodeploy.yml) looks like this:
 
 ```yaml
-# Explicitely defining the java-native-image buildpack as described here https://paketo.io/docs/howto/java/#configure-the-graalvm-version to pin the GraalVM version
 pack build ghcr.io/jonashackt/spring-boot-flyio:latest \
     --builder paketobuildpacks/builder:tiny \
     --buildpack paketo-buildpacks/java-native-image@5.12.0 \
@@ -351,6 +351,24 @@ pack build ghcr.io/jonashackt/spring-boot-flyio:latest \
     --cache-image ghcr.io/jonashackt/spring-boot-flyio-paketo-cache-image:latest \
     --publish
 ```
+
+We can even run this command locally. Having our image locally (or pull it right from the GitHub Container Registry), we can check how much memory our native image compiled Spring Boot app now consumes. Therefor the `docker stats` command https://docs.docker.com/engine/reference/commandline/stats/ comes in handy:
+
+```shell
+docker stats
+CONTAINER ID   NAME                 CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O       PIDS
+18523add6e0c   trusting_diffie      0.00%     19.19MiB / 9.731GiB   0.19%     1.09kB / 0B       147kB / 0B      6
+````
+
+
+With this small footprint it should be safe to scale down to the fly.io free tier again! Let's do this via the command line:
+
+```shell
+fly scale memory 256
+```
+
+Now that's pretty cool!
+
 
 
 # Links

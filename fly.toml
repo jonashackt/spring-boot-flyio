@@ -1,4 +1,4 @@
-# fly.toml file generated for spring-boot-flyio on 2022-09-12T10:51:35+02:00
+# fly.toml file generated for spring-boot-flyio on 2022-09-14T11:37:49+02:00
 
 app = "spring-boot-flyio"
 kill_signal = "SIGINT"
