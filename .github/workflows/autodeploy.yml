@@ -23,16 +23,20 @@ jobs:
 
       # Caching Paketo Build see https://stackoverflow.com/a/66598693/4964553
       # BP_OCI_SOURCE as --env creates the GitHub Container Registry <-> Repository link (https://paketo.io/docs/buildpacks/configuration/#applying-custom-labels)
-      # BP_JVM_VERSION 16, because we use Java 17 inside our Maven build but Paketo defaults to 11
+      # BP_JVM_VERSION 17, because we use Java 17 inside our Maven build but Paketo defaults to 11
+      # Explicitely defining the java-native-image buildpack as described here https://paketo.io/docs/howto/java/#configure-the-graalvm-version
+      # to pin the GraalVM version (5.12.0 = GraalVM 21.3)
       - name: Build app with pack CLI & publish to bc Container Registry
         run: |
           pack build ghcr.io/jonashackt/spring-boot-flyio:latest \
-              --builder paketobuildpacks/builder:base \
+              --builder paketobuildpacks/builder:tiny \
+              --buildpack paketo-buildpacks/java-native-image@5.12.0 \
               --path . \
-              --env "BP_OCI_SOURCE=https://github.com/jonashackt/spring-boot-flyio" \
               --env "BP_JVM_VERSION=17" \
+              --env "BP_NATIVE_IMAGE=true" \
               --cache-image ghcr.io/jonashackt/spring-boot-flyio-paketo-cache-image:latest \
               --publish
+
 
       - name: Install flyctl via https://github.com/superfly/flyctl-actions
         uses: superfly/flyctl-actions/setup-flyctl@master

@@ -336,6 +336,21 @@ Remember that we are producing a small bill with our Spring Boot app needing mor
 As you may already noticed I configured the `Spring Native` dependency into our Spring Boot project. This experimental project enables our app to be build into a native image with a much smaller memory footprint based on GraalVM https://blog.codecentric.de/en/2020/05/spring-boot-graalvm/
 
 
+### How to build a Spring Boot native image with Paketo?
+
+https://paketo.io/docs/howto/java/#build-an-app-as-a-graalvm-native-image-application
+
+```yaml
+# Explicitely defining the java-native-image buildpack as described here https://paketo.io/docs/howto/java/#configure-the-graalvm-version to pin the GraalVM version
+pack build ghcr.io/jonashackt/spring-boot-flyio:latest \
+    --builder paketobuildpacks/builder:tiny \
+    --buildpack paketo-buildpacks/java-native-image@5.12.0 \
+    --path . \
+    --env "BP_JVM_VERSION=17" \
+    --env "BP_NATIVE_IMAGE=true" \
+    --cache-image ghcr.io/jonashackt/spring-boot-flyio-paketo-cache-image:latest \
+    --publish
+```
 
 
 # Links
